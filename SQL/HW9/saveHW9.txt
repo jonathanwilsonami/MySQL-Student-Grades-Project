@@ -1,0 +1,108 @@
+1. This is final.sql
+
+############################################################
+#"Final" table that includes StudentID, Form, Qnum, Score, 
+#and Domain_num.
+###########################################################
+
+use Stat226;
+
+drop table if exists final;
+drop table if exists overallStudents;
+drop table if exists overallStudentsTemp;
+drop table if exists overallDomains;
+drop table if exists studentScores;
+drop table if exists questionAnalysis;
+
+create table final
+select StudentID, s.Form, Qnum, DomainNum, score
+from Domain as d
+join Students as s on s.Form=d.Form and s.Qnum=d.QuestionNum; 
+
+
+create table overallStudentsTemp
+select StudentID, sum(score) as Total, sum(score)/150 as Mean  
+from final 
+group by StudentID;
+
+alter table overallStudentsTemp
+add DomainNum int 
+default 0;
+
+create table overallStudents
+select StudentID, DomainNum, Total, Mean
+from overallStudentsTemp; 
+
+create table overallDomains
+select StudentID, DomainNum, sum(score) as Total, sum(score)/30 as Mean  
+from final 
+group by DomainNum, StudentID;
+
+create table studentScores
+select *
+from overallStudents
+union
+select *
+from overallDomains;
+
+create table questionAnalysis
+select Form, Qnum, sum(score)/150 as Mean
+from final
+group by Form, Qnum;
+
+select * from studentScores limit 10;
+select * from studentScores order by DomainNum, StudentID desc limit 10;
+
+select * from questionAnalysis limit 10;
+select * from questionAnalysis order by Qnum desc limit 10;
+2. This is runBatch.sh
+
+#!/bin/bash
+mysql -u stats -p < final.sql > result.txt
+
+3. This is output after running my shell script
+
+StudentID	DomainNum	Total	Mean
+1	0	103	0.6867
+2	0	121	0.8067
+3	0	101	0.6733
+4	0	114	0.7600
+5	0	114	0.7600
+6	0	108	0.7200
+7	0	123	0.8200
+8	0	94	0.6267
+9	0	102	0.6800
+10	0	103	0.6867
+StudentID	DomainNum	Total	Mean
+191         5     13  0.4333 
+192         5     15  0.5000 
+193         5     18  0.6000 
+194         5     14  0.4667 
+195         5     13  0.4333 
+196         5     18  0.6000 
+197         5     16  0.5333 
+198         5     14  0.4667 
+199         5     20  0.6667 
+200         5     17  0.5667 
+Form	Qnum	Mean
+A	1	0.0533
+A	2	0.2533
+A	3	0.1400
+A	4	0.3133
+A	5	0.2800
+A	6	0.2333
+A	7	0.2600
+A	8	0.2933
+A	9	0.3333
+A	10	0.1667
+Form	Qnum	Mean
+D      141  0.3067 
+D      142  0.2933 
+D      143  0.2200 
+D      144  0.3200 
+D      145  0.1600 
+D      146  0.0267 
+D      147  0.3333 
+D      148  0.2933 
+D      149  0.3200 
+D      150  0.3333 

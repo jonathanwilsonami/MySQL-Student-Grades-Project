@@ -1,0 +1,110 @@
+1. This is final.sql
+
+############################################################
+#"Final" table that includes StudentID, Form, Qnum, Score, 
+#and Domain_num.
+###########################################################
+
+use Stat226;
+
+drop table if exists final;
+drop table if exists overallStudents;
+drop table if exists overallStudentsTemp;
+drop table if exists overallDomains;
+drop table if exists studentScores;
+drop table if exists questionAnalysis;
+
+create table final (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, s.Form, Qnum, DomainNum, score
+from Domain as d
+join Students as s on s.Form=d.Form and s.Qnum=d.QuestionNum; 
+
+
+create table overallStudentsTemp (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, sum(score) as Total, avg(score) as Mean  
+from final 
+group by StudentID;
+
+alter table overallStudentsTemp
+add DomainNum int 
+default 0;
+
+create table overallStudents (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, DomainNum, Total, Mean
+from overallStudentsTemp; 
+
+create table overallDomains (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, DomainNum, sum(score) as Total, avg(score) as Mean  
+from final 
+group by DomainNum, StudentID;
+
+create table studentScores (StudentID INT(3) ZEROFILL NOT NULL)
+select *
+from overallStudents
+union
+select *
+from overallDomains
+order by StudentID, DomainNum;
+
+create table questionAnalysis (Qnum INT(3) ZEROFILL NOT NULL)
+select Form, Qnum, avg(score) as Mean
+from (select Form, Qnum, score from final) f
+group by Form, Qnum
+order by Form, Qnum;
+
+select * from studentScores limit 10;
+select * from studentScores order by StudentID desc, DomainNum desc limit 10;
+
+select * from questionAnalysis limit 10;
+select * from questionAnalysis order by Form desc, Qnum desc limit 10;
+2. This is runBatch.sh
+
+#!/bin/bash
+mysql -u stats -p < final.sql > result.txt
+
+3. This is output after running my shell script
+
+StudentID	DomainNum	Total	Mean
+001	0	103	0.6867
+001	1	17	0.5667
+001	2	24	0.6857
+001	3	25	0.8333
+001	4	24	0.8000
+001	5	13	0.5200
+002	0	121	0.8067
+002	1	26	0.8667
+002	2	31	0.8857
+002	3	25	0.8333
+StudentID	DomainNum	Total	Mean
+200	5	17	0.6800
+200	4	20	0.6667
+200	3	24	0.8000
+200	2	28	0.8000
+200	1	23	0.7667
+200	0	112	0.7467
+199	5	20	0.8000
+199	4	20	0.6667
+199	3	20	0.6667
+199	2	27	0.7714
+Form	Qnum	Mean
+A	001	0.1600
+A	002	0.7600
+A	003	0.4200
+A	004	0.9400
+A	005	0.8400
+A	006	0.7000
+A	007	0.7800
+A	008	0.8800
+A	009	1.0000
+A	010	0.5000
+Form	Qnum	Mean
+D	150	1.0000
+D	149	0.9600
+D	148	0.8800
+D	147	1.0000
+D	146	0.0800
+D	145	0.4800
+D	144	0.9600
+D	143	0.6600
+D	142	0.8800
+D	141	0.9200

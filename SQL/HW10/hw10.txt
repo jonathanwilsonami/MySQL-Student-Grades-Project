@@ -1,0 +1,156 @@
+1. This is runBatch.sh
+
+#!/bin/bash
+#Remove previous files from other runs. Clean Final Results if already created. 
+if [ -f read.sql ] ; then
+    rm read.sql
+fi
+
+#touch read.sql
+cat table_schema.sql > read.sql
+
+#Loop through domains
+for file in `ls data/Domains_Form?.csv`
+do
+	letter=`echo $file | sed  's/..\/data\/Domains_Form//' | sed 's/.csv//' | sed 's/data\/Domains_Form//'` #Extract only the letter from $file
+	dos2unix -q $letter.csv #Convert dos file to unix format 
+	#Gets rid of the headers and puts in all the insert statements.
+	grep -v ItemId data/Domains_Form$letter.csv | sed -e s/$/,"$letter"/ | awk -F, -f insert_domain.awk >> read.sql
+done
+
+#Loop through students
+for file in `ls data/Form?.csv`
+do
+	dos2unix -q $file #Convert dos file to unix format 
+	letter=`echo $file | sed  's/..\/data\/Form//' | sed 's/.csv//' | sed 's/data\/Form//'` #Extract only the letter from $file
+	#Create data sets
+	grep 'KEY' $file > answer_key.csv; grep -v 'KEY' $file > student_answers.csv
+	
+	#Run R scripts
+	Rscript ConvertLetToBinary.R student_answers.csv answer_key.csv ResultsNum.R
+	Rscript ConvertWidetoLongFormat.R ResultsNum.R student_results.R
+	
+	#Data Cleaning the result data set
+	sed -i 's/\"//g' student_results.R
+	awk -f NumSort.awk student_results.R > student_results
+	
+	cat student_results | awk -f insert_student.awk >> read.sql #Removing the -F helped
+
+done
+
+mysql -u stats -p < read.sql
+
+#Order of turning in: shell, awk, sql (create table), first 10 lines and last 2 of read.sql. 
+
+2. These are the awk scripts
+
+
+##########################################################################
+#This file is for insert statements. This will be applied on each of the 
+#csv files. 
+##########################################################################
+
+{
+ print "INSERT INTO Students"$2" (StudentID, Form, Qnum, Score) VALUES (" $1 ",'" $2 "'," $3 "," $4 ");"
+}
+
+##########################################################################
+#This file is for insert statements. This will be applied on each of the 
+#csv files. 
+##########################################################################
+
+{
+ print "INSERT INTO Domain"$5" (ItemID, Domain, Domain_num, Qnum, Form) VALUES ('" $1 "','" $2 "'," $3 "," $4 ",'" $5 "');"
+}
+3. This is table schema
+
+####################################################################
+#This file creates 8 tables for DomainsA-D and StudentsA-D 
+####################################################################
+
+use Stat226;
+
+#Drop table if I am re running the script. 
+drop table if exists DomainA;
+drop table if exists DomainB;
+drop table if exists DomainC;
+drop table if exists DomainD;
+drop table if exists StudentsA;
+drop table if exists StudentsB;
+drop table if exists StudentsC;
+drop table if exists StudentsD;
+
+create table DomainA (
+	ItemID integer,
+	Domain varchar(255),
+	Domain_num integer,
+	Qnum integer,
+	Form char(1)
+);
+
+create table DomainB (
+	ItemID integer,
+	Domain varchar(255),
+	Domain_num integer,
+	Qnum integer,
+	Form char(1)
+);
+
+create table DomainC (
+	ItemID integer,
+	Domain varchar(255),
+	Domain_num integer,
+	Qnum integer,
+	Form char(1)
+);
+
+create table DomainD (
+	ItemID integer,
+	Domain varchar(255),
+	Domain_num integer,
+	Qnum integer,
+	Form char(1)
+);
+
+create table StudentsA (
+	StudentID integer,
+	Form char(1),
+	Qnum integer,
+	Score integer
+);
+
+create table StudentsB (
+	StudentID integer,
+	Form char(1),
+	Qnum integer,
+	Score integer
+);
+
+create table StudentsC (
+	StudentID integer,
+	Form char(1),
+	Qnum integer,
+	Score integer
+);
+
+create table StudentsD (
+	StudentID integer,
+	Form char(1),
+	Qnum integer,
+	Score integer
+);
+
+4. Last 10 results.
+
+Tail
+
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (182,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (184,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (186,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (188,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (190,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (192,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (194,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (196,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (198,'D',150,1);
+INSERT INTO StudentsD (StudentID, Form, Qnum, Score) VALUES (200,'D',150,1);

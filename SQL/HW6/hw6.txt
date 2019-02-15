@@ -1,0 +1,80 @@
+1. This is load_domain.sh
+
+#!/bin/bash
+###############################################################
+#This file is and executable for all other scripts            #  
+#That will create the Domain table in mysql.                  #
+#Create read_domain.sql. This file must have all the commands #
+#required to create Domain table inside of Stat226 database.  #
+###############################################################
+
+#Remove previous files from other runs. Clean Final Results if already created. 
+if [ -f read_domain.sql ] ; then
+    rm read_domain.sql
+fi
+
+#touch read_domain.sql
+cat table_schema_domain.sql > read_domain.sql
+
+#Loop through n number of files
+for file in `ls data/Domains_Form?.csv`
+do
+	letter=`echo $file | sed  's/..\/data\/Domains_Form//' | sed 's/.csv//' | sed 's/data\/Domains_Form//'` #Extract only the letter from $file
+	dos2unix -q $letter.csv #Convert dos file to unix format 
+	#Gets rid of the headers and puts in all the insert statements.
+	grep -v ItemId data/Domains_Form$letter.csv | sed -e s/$/,"$letter"/ | awk -F, -f insert_template_domain.awk >> read_domain.sql
+done
+
+mysql -u stats -p < read_domain.sql
+
+#Order of turning in: shell, awk, sql (create table), first 10 lines and last 2 of read.sql. 
+
+2. This is insert_template_domain.awk
+
+##########################################################################
+#This file is for insert statements. This will be applied on each of the 
+#csv files. 
+##########################################################################
+
+{
+ print "INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('" $1 "','" $2 "'," $3 "," $4 ",'" $5 "');"
+}
+3. This is table_schema_domain.sql
+
+####################################################################
+#This file creates a new table called 'Domain' with the 4 variables 
+#listed in the headers of the csv files and additional variable
+#of type char called 'Form' that has the Form letter. 
+####################################################################
+
+use Stat226;
+
+#Drop table if I am re running the script. 
+drop table if exists Domain;
+
+create table Domain (
+	ItemID integer,
+	Domain varchar(255),
+	DomainNum integer,
+	QuestionNum integer,
+	Form char(1)
+);
+
+4. This is read_domain.sql. I added more lines because I added notes and other code before.
+
+Head
+
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49552','Organizational and Administrative Responsibilities',5,1,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49432','Athlete Testing and Evaluation',4,2,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49497','Organizational and Administrative Responsibilities',5,3,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49473','Organizational and Administrative Responsibilities',5,4,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49425','Program Design and Development',2,5,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49503','Athlete Testing and Evaluation',4,6,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49286','Program Design and Development',2,7,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49563','Athlete Education and Training',3,8,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49544','Organizational and Administrative Responsibilities',5,9,'A');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49334','Program Design and Development',2,10,'A');
+Tail
+
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49505','Athlete Education and Training',3,149,'D');
+INSERT INTO Domain (ItemID, Domain, DomainNum, QuestionNum, Form) VALUES ('49404','Program Design and Development',2,150,'D');

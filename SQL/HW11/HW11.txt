@@ -1,0 +1,86 @@
+1. This is the template sql file
+
+drop table if exists finalzzz;
+
+drop table if exists overallStudentszzz;
+drop table if exists overallDomainszzz;
+drop table if exists SectionA_zzz;
+drop table if exists SectionB_zzz;
+
+create table finalzzz (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, s.Form, s.Qnum, Domain_num, score
+from Domainzzz as d
+join Students as s on s.Form=d.Form and s.Qnum=d.Qnum; 
+
+create table overallStudentszzz (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, 0 as Domain_num, sum(score) as Total, avg(score) as Mean  
+from finalzzz 
+group by StudentID;
+
+create table overallDomainszzz (StudentID INT(3) ZEROFILL NOT NULL)
+select StudentID, Domain_num, sum(score) as Total, avg(score) as Mean  
+from finalzzz 
+group by Domain_num, StudentID;
+
+create table SectionA_zzz (StudentID INT(3) ZEROFILL NOT NULL)
+select *
+from overallStudentszzz
+union
+select *
+from overallDomainszzz
+order by StudentID, Domain_num;
+
+create table SectionB_zzz (Qnum INT(3) ZEROFILL NOT NULL)
+select Form, Qnum, avg(score) as Mean
+from (select Form, Qnum, score from finalzzz) f
+group by Form, Qnum
+order by Form, Qnum;
+
+2. This is runBatch.sh
+
+#!/bin/bash
+
+#Remove previous files from other runs. Clean Final Results if already created. 
+if [ -f read_sql.sql ] ; then
+    rm read_sql.sql
+fi
+
+cat database.txt > read_sql.sql
+#Loop through n number of files
+for file in `ls data/Form?.csv`
+do
+	dos2unix -q $file #Convert dos file to unix format 
+	letter=`echo $file | sed  's/..\/data\/Form//' | sed 's/.csv//' | sed 's/data\/Form//'` #Extract only the letter from $file
+	
+	cat sections.sql | sed 's/zzz/'$letter'/' >> read_sql.sql	
+
+done
+#add select statements
+cat selects.sql >> read_sql.sql
+
+mysql -u stats -p < read_sql.sql > result.txt
+3. This is output after running my shell script
+
+NOTE: That I am using Form D...
+
+StudentID	Domain_num	Total	Mean
+102	0	121	0.8067
+102	1	27	0.9000
+102	2	31	0.8857
+102	3	25	0.8333
+102	4	23	0.7667
+102	5	15	0.6000
+104	0	112	0.7467
+104	1	20	0.6667
+104	2	28	0.8000
+104	3	22	0.7333
+104	4	25	0.8333
+104	5	17	0.6800
+106	0	116	0.7733
+106	1	24	0.8000
+Form	Qnum	Mean
+D	001	0.1600
+D	002	0.5600
+D	003	0.9800
+D	004	0.9800
+D	005	0.4400
