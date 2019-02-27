@@ -1,0 +1,180 @@
+####Basic Set up for this class. Installations, versions, environment, etc. Can be changed or modified.
+
+#Before you start on an exsisting machine it is always good to updadate and install any packages you may be missing. 
+As root - 
+apt update
+apt upgrade
+apt install #install all pacakges downloaded from apt update
+#Ans some other useful installs
+apt install r-base
+apt isntall libcurl4-openssl-dev
+apt install libssl-dev #This was a useful pacakge for R
+apt list #Shows what you downloaded. 
+
+
+#########Basic installs##########
+
+##Installing Virtual Box and Extension Pack
+1. Go to https://www.virtualbox.org/wiki/Downloads
+
+2. Under the bolded section which says "VirtualBox 5.2.6 platform packages" click on the link which 
+corresponds to your computer (Windows or Mac OS X). 
+This will download the installer for the virtual box. 
+For Windows users: Open the installer and click Run. 
+
+3. Follow the installation steps. Allow the default settings (don't change the settings). 
+
+4. Once the virtual box is installed, return to the virtual box website and install the "Virtual Box 5.2.16 Oracle VM Extension Pack". 
+There is only one version which works for all platforms (mac and windows). 
+
+##Installing Ubuntu
+1. Open Virtual Box and click New 
+2. Type Ubuntu into the name field; type should be Linux and version should be Ubuntu (64-bit). Then press Next.
+3. Make sure that you allocate at least 2 Gigabytes of RAM for the virutal machine.
+4. Select "Create a virtual hard disk now" option then press create.
+5. Select "VDI (VirtualBox Disk image)" then press next.
+6. Select "Dynamically allocated" then press next.
+7. Change the size limit to 20.00 GB then press create.
+8. Ubuntu will now appear in your virtual box. Select Ubuntu and press Start.
+9. Click on the folder icon and then go to the Ubuntu file called "ubuntu-16.04.5-desktop-amd64" located on the flash drive.
+10. Then press start. This will lead you to the set-up of the installation. 
+
+#Installation Set-Up
+1. Select "Install Ubuntu"
+
+2. On the next page don't click on either option. Simply, click continue to move forward.
+
+3. The next page will prompt you to "Erase disk and install Ubuntu". This is correct. 
+Since we are in the virtual box, this will not affect your computer at all. With that option selected, click "Install Now".
+
+4. At the next window "Write the changes to disks?" click continue.
+
+5. Select "Denver" time zone then press continue.
+
+6. Select English (US) as the language then press continue. 
+
+7. At the "Who are you?" window use "stats" as your name, username, and password. Your computer's name should be Ubuntu-VirtualBox.
+
+The installation will take a few minutes. At the end of the installation it will say a restart is required. Press to restart now. 
+This will only restart the Ubuntu software inside the virtual box. You do not need to restart your actual computer. 
+It may ask you to "remove the installation medium", which means remove the flash drive and then restart Ubuntu.
+
+##Installing Guest Additions
+1. Start Ubuntu
+2. Select Devices at the top of the screen.
+
+3. Then select "Insert Guest Additions CD Image" and click Run.
+
+4. It will ask for your password for permission. Your password should be "stats".
+
+5.  This will now install the Guest Additions which are necessary to perform certain functions. 
+
+After a few minutes there will be a line in the terminal which will say, "Press Return to close this window..."  
+At this point, press return. Before moving on, eject the CD by right clicking on the CD icon on the left-side panel and select Eject.
+
+##Connecting Clipboards
+It is useful to connect your native machine's clipboard to the Ubuntu clipboard so you can copy and paste between them.
+To do this, go to Devices along the top of Ubuntu, go to Shared Clipboard, and select Bidirectional.
+
+##Linking Guest Operating Filesystem to Native Filesystem
+1. First, you will need to create a folder called "myfolders" in your native file system. (Not in Ubuntu). 
+If you have a folder already called "myfolders" from a previous STATS class, you can use that or you can create a new folder. 
+This will be the folder which links your native system to Ubuntu. This folder can be located anywhere in your native filesystem.
+
+2. After you have created your folder called "myfolders", power off Ubuntu so that you are looking at the Virtual Box window. Then select Settings. 
+
+3. Click on the Shared Folders tab on the left-hand side of the screen.
+
+4. Then click on the small blue folder towards the upper right-hand side of the screen.
+
+5. Select the folder "myfolders" which you just created. Then press continue. This folder should show up as a Machine Folder not a Transient folder. 
+If Ubuntu is running while you do this step it will make "myfolders" a transient folder and not a machine folder. Make sure Ubuntu is powered down during this step.
+
+Now you need to mount your folders. 
+
+##Mounting your Folders
+Open up a terminal window in Ubuntu.
+
+First create a folder called myfolders in your stats directory: mkdir myfolders
+
+Then open up the file .bashrc in your favorite text editor. For example: nano .bashrc
+
+Scroll down to the end of the document. Here we will create an alias mount command. Use the following code:
+
+alias mnt='sudo mount -t vboxsf myfolders ~/myfolders -o uid=1000,gid=1000'
+
+Then exit the text editor and close the terminal window. Open a new terminal window and type alias. You should see the alias that you just created.
+
+Then type mnt in the terminal window. This will run your mount command and it will link your myfolders in Ubuntu to your myfolders on your native machine.
+
+Type ls myfolders and your files from your native machine should be available. 
+
+##Install mysql
+The MySQL package version that comes with Ubuntu's default repositories is not the latest version. 
+To install the latest version (version 8.0), we need to download and install its repository. To do this, type the code below into your terminal window:
+
+wget https://dev.mysql.com/get/mysql-apt-config_0.8.12-1_all.deb
+
+sudo dpkg -i mysql-apt-config_0.8.12-1_all.deb
+
+Now that the repository for MySQL 8.0 is installed, run the commands below to install mysql.
+
+sudo apt update
+sudo apt install mysql-server mysql-client
+
+Sudo makes you the sudo user and grants you permission to install packages.
+Apt (Advanced Package Tool) is the command line tool to interact with this packaging system.
+Then install mysql-server installs the mysql-server package.
+
+The installation process will ask you to set a password for the root user. For convenience use the password "stats".
+At this point, you might get a window with an ok option that you can't select using the arrow keys. If this happens, use the tab key to select the ok option to proceed.
+Next, the installation script asks you whether to use Strong Password Encryption or Legacy Authentication:
+
+ou should now have MySQL installed on your virtual machine. You should be able to access it by running the command
+sudo mysql -p
+
+##Install the most current version of R
+First you will need to become a root user temporarily:
+
+sudo su - (This allows you to become a root user temporarily)
+echo "deb https://cran.rstudio.com/bin/linux/ubuntu xenial-cran35/" > /etc/apt/sources.list.d/r_from_cran.list (This references the R download from the web)
+apt-key adv --keyserver keyserver.ubuntu.com --recv-key E084DAB9 (This simply references the server you will be using in R in Linux)
+apt update (This updates the packages)
+apt install r-base (This installs the most current version of R)
+exit (Gets you out of being the root user)
+
+########Setting up the database##########
+##Launch MySQL and Create User
+The first thing we will do is create a user in mysql called 'stats'. In real-life cases, it is unlikely you will have access to 'root.' Therefore we will create and do most of our work through the 'stats' user.
+
+Open a terminal in Ubuntu and type the following command (this root command is used anytime you want to manage user options to databases stored in mysql):
+
+In your terminal window, do the following command:
+
+mysql -u root -p
+
+Now that you are in mysql, do the following command:
+
+create user 'stats'@'localhost' identified by 'stats';
+
+use mysql;
+
+select user,host from user;
+
+show grants for 'stats'@'localhost';
+
+exit;
+
+#Create Database Sakila in Root
+Anytime we create databases, we will do so in 'root'. However, we will pretty much do everything else (e.g. create tables, read in data) with the user 'stats':
+
+mysql -u root -p
+
+create database sakila;
+
+GRANT ALL PRIVILEGES ON sakila.* TO 'stats'@'localhost';
+exit;
+
+As you an see, the code above creates the database 'sakila' in 'root'. Then, we grant privileges to 'stats', allowing us to access 'sakila' in our 'stats' user.
+
+#NOTE: You can create any database this way
