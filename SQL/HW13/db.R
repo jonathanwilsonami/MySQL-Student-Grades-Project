@@ -6,7 +6,8 @@ library('dplyr')
 library('rowr')
 options(max.print=10000)
 m <- dbDriver("MySQL")
-con <- dbConnect(m,user='stat226', password='cougars19',host='statdb.byu.edu',dbname='stat226')
+#Credentials are different
+con <- dbConnect(m,user='user', password='pass',host='host',dbname='bdName')
 dbFetch(dbSendQuery(con, "show tables"), n = -1)
 
 #Get data
@@ -37,5 +38,5 @@ student_table$Mean <- round(student_table$Mean, 2)
 #student_table
 
 #Push to db
-conw <- dbConnect(m,user='stats',password='stats',host='localhost',dbname='Stat226')
+conw <- dbConnect(m,user='user', password='pass',host='host',dbname='bdName')
 dbWriteTable(conw, value = student_table, name = "student_table", append = FALSE ) 
